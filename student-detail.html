@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>פרטי תלמידה - מרחב קולי</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+    <header class="main-header">
+        <div class="header-container">
+            <div class="logo-section">
+                <i class="fas fa-headphones"></i>
+                <div class="logo-text">
+                    <h1>מרחב קולי</h1>
+                    <p class="subtitle">מערכת ניהול האזנות</p>
+                </div>
+            </div>
+            <nav class="main-nav">
+                <a href="index.html" class="nav-link">
+                    <i class="fas fa-users"></i>
+                    תלמידים
+                </a>
+                <a href="statistics.html" class="nav-link">
+                    <i class="fas fa-chart-bar"></i>
+                    סטטיסטיקות
+                </a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <div class="back-button">
+            <a href="index.html" class="btn-back">
+                <i class="fas fa-arrow-right"></i>
+                חזרה לרשימה
+            </a>
+        </div>
+
+        <div class="student-profile" id="studentProfile">
+            <div class="loading">טוען נתונים...</div>
+        </div>
+
+        <div class="listening-history" id="listeningHistory">
+        </div>
+    </main>
+
+    <script src="student-detail.js"></script>
+</body>
+</html>

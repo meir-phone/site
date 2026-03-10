@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>סטטיסטיקות - מרחב קולי</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+    <header class="main-header">
+        <div class="header-container">
+            <div class="logo-section">
+                <i class="fas fa-headphones"></i>
+                <div class="logo-text">
+                    <h1>מרחב קולי</h1>
+                    <p class="subtitle">מערכת ניהול האזנות</p>
+                </div>
+            </div>
+            <nav class="main-nav">
+                <a href="index.html" class="nav-link">
+                    <i class="fas fa-users"></i>
+                    תלמידים
+                </a>
+                <a href="statistics.html" class="nav-link active">
+                    <i class="fas fa-chart-bar"></i>
+                    סטטיסטיקות
+                </a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <div class="page-header">
+            <h2>סטטיסטיקות כלליות</h2>
+            <button class="refresh-btn" id="refreshData" title="רענן נתונים מהשרת">
+                <i class="fas fa-sync-alt"></i>
+                רענן נתונים
+            </button>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card-large">
+                <i class="fas fa-users stat-icon"></i>
+                <div class="stat-number" id="totalStudents">0</div>
+                <div class="stat-label">סך תלמידות</div>
+            </div>
+            <div class="stat-card-large">
+                <i class="fas fa-headphones stat-icon"></i>
+                <div class="stat-number" id="totalListenings">0</div>
+                <div class="stat-label">סך האזנות</div>
+            </div>
+            <div class="stat-card-large">
+                <i class="fas fa-user-check stat-icon"></i>
+                <div class="stat-number" id="activeStudents">0</div>
+                <div class="stat-label">תלמידות פעילות</div>
+            </div>
+            <div class="stat-card-large">
+                <i class="fas fa-user-times stat-icon"></i>
+                <div class="stat-number" id="inactiveStudents">0</div>
+                <div class="stat-label">תלמידות לא פעילות</div>
+            </div>
+        </div>
+
+        <!-- Tabs Navigation -->
+        <div class="tabs-container">
+            <div class="tabs-nav">
+                <button class="tab-btn active" data-tab="filter">
+                    <i class="fas fa-filter"></i>
+                    סינון ותלמידות שלא הקשיבו
+                </button>
+                <button class="tab-btn" data-tab="grades">
+                    <i class="fas fa-chart-pie"></i>
+                    פילוח שכבות
+                </button>
+                <button class="tab-btn" data-tab="top">
+                    <i class="fas fa-trophy"></i>
+                    תלמידות מובילות
+                </button>
+            </div>
+
+            <!-- Tab 1: Filter and Inactive Students -->
+            <div class="tab-content active" id="tab-filter">
+                <div class="filter-section">
+                    <h3>סינון לפי תאריך</h3>
+                    <div class="date-filters">
+                        <div class="date-input-group">
+                            <label for="selectedDate">בחר תאריך:</label>
+                            <select id="selectedDate" class="date-select">
+                                <option value="">כל התאריכים</option>
+                            </select>
+                        </div>
+                        <button class="filter-btn" id="applyDateFilter">
+                            <i class="fas fa-filter"></i>
+                            סנן
+                        </button>
+                        <button class="filter-btn" id="resetDateFilter">
+                            <i class="fas fa-redo"></i>
+                            הצג הכל
+                        </button>
+                        <button class="export-btn" id="exportToExcel">
+                            <i class="fas fa-file-excel"></i>
+                            ייצא לאקסל
+                        </button>
+                    </div>
+                    <div id="filterInfo" class="filter-info"></div>
+                </div>
+
+                <div class="stats-section">
+                    <h3>תלמידות שלא הקשיבו בתאריך הנבחר</h3>
+                    <div class="inactive-students-list" id="inactiveStudentsList">
+                        <div class="loading">טוען נתונים...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 2: Grade Statistics -->
+            <div class="tab-content" id="tab-grades">
+                <div class="stats-section">
+                    <h3>פילוח לפי שכבות</h3>
+                    <div class="grade-stats" id="gradeStats">
+                        <div class="loading">טוען נתונים...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 3: Top Students -->
+            <div class="tab-content" id="tab-top">
+                <div class="stats-section">
+                    <h3>תלמידות מובילות (לפי מספר האזנות)</h3>
+                    <div class="top-students" id="topStudents">
+                        <div class="loading">טוען נתונים...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="statistics.js"></script>
+</body>
+</html>
