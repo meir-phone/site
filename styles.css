@@ -188,7 +188,7 @@ i {
 
 #searchInput {
     width: 100%;
-    padding: 1rem 1rem 1rem 3rem;
+    padding: 1rem 3rem 1rem 1rem;
     border: 2px solid var(--light-green);
     border-radius: 12px;
     font-size: 1rem;
