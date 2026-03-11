@@ -136,6 +136,12 @@ function populateDateDropdown() {
     
     // Populate dropdown
     const select = document.getElementById('selectedDate');
+    
+    // Clear existing options except the first one (the default "כל התאריכים")
+    while (select.options.length > 1) {
+        select.remove(1);
+    }
+    
     dates.forEach(date => {
         const option = document.createElement('option');
         option.value = date;
