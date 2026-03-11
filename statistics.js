@@ -2,32 +2,87 @@
 let studentsData = [];
 let listeningData = {};
 let selectedDate = null;
+let isLoadingListeningData = false;
+
+// Cache configuration
+const CACHE_KEY_STUDENTS = 'merhavim_stats_students_cache';
+const CACHE_KEY_LISTENING = 'merhavim_stats_listening_cache';
+const CACHE_KEY_TIMESTAMP = 'merhavim_stats_cache_timestamp';
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
 // API URL for the INI file
 const INI_FILE_URL = 'https://www.call2all.co.il/ym/api//DownloadFile?token=WU1BUElL.apik_H5dQJ0e4Fdyc8NiRvSWMdw.jhS6PXCTir0yTsW-ydHKZ45Mu3P3_e-RYTsoEg9p4eo&path=ivr2:18/ListeningOk.ini';
+
+// Check if cache is valid
+function isCacheValid() {
+    const timestamp = localStorage.getItem(CACHE_KEY_TIMESTAMP);
+    if (!timestamp) return false;
+    
+    const age = Date.now() - parseInt(timestamp);
+    return age < CACHE_DURATION;
+}
+
+// Load from cache
+function loadFromCache() {
+    try {
+        const studentsCache = localStorage.getItem(CACHE_KEY_STUDENTS);
+        const listeningCache = localStorage.getItem(CACHE_KEY_LISTENING);
+        
+        if (studentsCache && listeningCache) {
+            studentsData = JSON.parse(studentsCache);
+            listeningData = JSON.parse(listeningCache);
+            console.log('⚡ Loaded from cache:', studentsData.length, 'students - INSTANT!');
+            return true;
+        }
+    } catch (error) {
+        console.error('Error loading from cache:', error);
+    }
+    return false;
+}
+
+// Save to cache
+function saveToCache() {
+    try {
+        localStorage.setItem(CACHE_KEY_STUDENTS, JSON.stringify(studentsData));
+        localStorage.setItem(CACHE_KEY_LISTENING, JSON.stringify(listeningData));
+        localStorage.setItem(CACHE_KEY_TIMESTAMP, Date.now().toString());
+        console.log('💾 Data saved to cache');
+    } catch (error) {
+        console.error('Error saving to cache:', error);
+        if (error.name === 'QuotaExceededError') {
+            console.log('⚠️ Storage quota exceeded, clearing cache...');
+            clearCache();
+        }
+    }
+}
+
+// Clear cache
+function clearCache() {
+    localStorage.removeItem(CACHE_KEY_STUDENTS);
+    localStorage.removeItem(CACHE_KEY_LISTENING);
+    localStorage.removeItem(CACHE_KEY_TIMESTAMP);
+    console.log('🗑️ Cache cleared');
+}
 
 // Parse INI file
 async function loadListeningData() {
     try {
         console.log('🔄 Loading listening data from server...');
-        console.log('📡 Server URL:', INI_FILE_URL);
+        isLoadingListeningData = true;
         
         const startTime = Date.now();
         const response = await fetch(INI_FILE_URL);
         const loadTime = Date.now() - startTime;
         
         console.log('✅ Server response received in', loadTime, 'ms');
-        console.log('📊 Response status:', response.status, response.statusText);
-        console.log('📦 Content-Type:', response.headers.get('content-type'));
         
         const text = await response.text();
         const lines = text.split('\n');
         
         console.log('📄 Total lines in file:', lines.length);
-        console.log('📝 First line sample:', lines[0]);
-        console.log('📝 Last line sample:', lines[lines.length - 2]);
         
         let processedCount = 0;
+        listeningData = {}; // Clear existing data
         
         lines.forEach(line => {
             line = line.trim();
@@ -39,8 +94,6 @@ async function loadListeningData() {
             const id = parts[0].replace('teudat_zehut_', '');
             const extension = parts[1];
             const file = parts[2];
-            // Date format in file: Date-2026-03-08-Hour
-            // parts[3] = "Date", parts[4] = "2026", parts[5] = "03", parts[6] = "08", parts[7] = "Hour"
             const date = `${parts[4]}-${parts[5]}-${parts[6]}`;
             const time = `${parts[8]}-${parts[9]}-${parts[10]}`.replace(/-/g, ':');
             
@@ -65,30 +118,49 @@ async function loadListeningData() {
         console.log('✅ Listening data loaded successfully!');
         console.log('👥 Students with listening history:', totalStudents);
         console.log('🎧 Total listening records:', totalListenings);
-        console.log('📊 Processed lines:', processedCount);
-        console.log('⏰ Last update:', new Date().toLocaleString('he-IL'));
         
-        // Debug: show sample dates
-        const sampleDates = new Set();
-        Object.values(listeningData).slice(0, 5).forEach(history => {
-            history.forEach(item => sampleDates.add(item.date));
-        });
-        console.log('📅 Sample dates found:', Array.from(sampleDates));
+        isLoadingListeningData = false;
+        
+        // Update students with listening data
+        updateStudentsWithListeningData();
+        
+        // Save to cache
+        saveToCache();
+        
     } catch (error) {
         console.error('❌ Error loading listening data:', error);
-        console.error('Error details:', error.message);
+        isLoadingListeningData = false;
     }
+}
+
+// Update students with listening data after it's loaded
+function updateStudentsWithListeningData() {
+    if (studentsData.length === 0) return;
+    
+    console.log('🔄 Updating students with listening data...');
+    
+    studentsData = studentsData.map(student => ({
+        ...student,
+        listeningHistory: listeningData[student.id] || []
+    }));
+    
+    populateDateDropdown();
+    calculateStatistics();
+    
+    console.log('✅ Students updated with listening data');
 }
 
 // Load Excel data
 async function loadStudentsData() {
     try {
-        console.log('Loading Excel file...');
+        console.log('⚡ Loading Excel file (fast mode)...');
         const response = await fetch('תלמידים.xlsx');
         const arrayBuffer = await response.arrayBuffer();
         const workbook = XLSX.read(arrayBuffer, { type: 'array' });
         const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
         const data = XLSX.utils.sheet_to_json(firstSheet);
+        
+        console.log('✅ Excel data loaded:', data.length, 'rows');
         
         studentsData = data.map((row, index) => {
             const id = String(row['מספר זהות'] || '').trim();
@@ -109,10 +181,14 @@ async function loadStudentsData() {
             };
         }).filter(student => student.name && student.id);
         
-        console.log('Processed students:', studentsData.length);
+        console.log('✅ Processed students:', studentsData.length);
         
+        // Show initial stats (will be updated when listening data loads)
         populateDateDropdown();
         calculateStatistics();
+        
+        console.log('⚡ Page rendered!');
+        
     } catch (error) {
         console.error('Error loading students data:', error);
     }
@@ -450,10 +526,33 @@ function formatDateForFilename(dateStr) {
     return `${day}-${month}-${year}`;
 }
 
-// Initialize
+// Initialize - Progressive loading with cache!
 async function init() {
-    await loadListeningData();
+    // Check if we have valid cache
+    if (isCacheValid() && loadFromCache()) {
+        console.log('⚡⚡⚡ INSTANT LOAD FROM CACHE - 0ms! ⚡⚡⚡');
+        populateDateDropdown();
+        calculateStatistics();
+        initTabs();
+        
+        // Show cache age
+        const timestamp = localStorage.getItem(CACHE_KEY_TIMESTAMP);
+        const age = Math.round((Date.now() - parseInt(timestamp)) / 1000);
+        console.log(`📅 Cache age: ${age} seconds (valid for ${CACHE_DURATION/1000} seconds)`);
+        return;
+    }
+    
+    console.log('📥 No valid cache - loading fresh data...');
+    
+    // Clear old cache
+    clearCache();
+    
+    // Step 1: Load and show students IMMEDIATELY (fast!)
     await loadStudentsData();
+    
+    // Step 2: Load listening data in background (slower)
+    loadListeningData(); // No await - runs in background
+    
     initTabs();
 }
 
@@ -477,7 +576,7 @@ function initTabs() {
     });
 }
 
-// Refresh data
+// Refresh data - force reload
 document.getElementById('refreshData').addEventListener('click', async () => {
     const btn = document.getElementById('refreshData');
     const icon = btn.querySelector('i');
@@ -486,15 +585,20 @@ document.getElementById('refreshData').addEventListener('click', async () => {
     icon.classList.add('fa-spin');
     btn.disabled = true;
     
+    console.log('🔄 Force refresh - clearing cache...');
+    
+    // Clear cache
+    clearCache();
+    
     // Clear existing data
     listeningData = {};
     studentsData = [];
     
-    // Reload data
-    await loadListeningData();
+    // Reload data progressively
     await loadStudentsData();
+    loadListeningData(); // Background load
     
-    // Remove spinning animation
+    // Remove spinning animation after students load
     icon.classList.remove('fa-spin');
     btn.disabled = false;
 });

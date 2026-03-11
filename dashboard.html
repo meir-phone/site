@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מרחבים - ניהול תלמידים</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+</head>
+<body class="secondary-page">
+    <header class="header">
+        <div class="logo">
+            <img src="logo.png" alt="מרחבים" class="logo-img">
+        </div>
+        <nav class="header-links">
+            <a href="statistics.html" class="header-link">סטטיסטיקות</a>
+            <a href="dashboard.html" class="header-link active">תלמידים</a>
+            <a href="index.html" class="header-link">דף הבית</a>
+        </nav>
+    </header>
+
+    <main class="main-content">
+        <div class="page-header">
+            <h2>רשימת תלמידים</h2>
+            <div class="stats-bar">
+                <div class="stat-item">
+                    <i class="fas fa-users"></i>
+                    <span id="totalStudents">0</span> תלמידים
+                </div>
+                <div class="stat-item">
+                    <i class="fas fa-headphones"></i>
+                    <span id="totalListenings">0</span> האזנות
+                </div>
+                <button class="refresh-btn" id="refreshData" title="רענן נתונים מהשרת">
+                    <i class="fas fa-sync-alt"></i>
+                    רענן נתונים
+                </button>
+            </div>
+        </div>
+
+        <div class="search-section">
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input type="text" id="searchInput" placeholder="חיפוש לפי שם, שכבה או כיתה...">
+            </div>
+            <div class="filter-buttons">
+                <button class="filter-btn active" data-grade="all">הכל</button>
+                <button class="filter-btn" data-grade="ט">ט'</button>
+                <button class="filter-btn" data-grade="י">י'</button>
+                <button class="filter-btn" data-grade="יא">יא'</button>
+                <button class="filter-btn" data-grade="יב">יב'</button>
+            </div>
+        </div>
+
+        <div class="students-grid" id="studentsGrid">
+            <div class="loading">טוען נתונים...</div>
+        </div>
+    </main>
+
+    <script src="students.js"></script>
+</body>
+</html>
