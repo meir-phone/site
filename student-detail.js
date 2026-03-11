@@ -6,7 +6,7 @@ let studentData = null;
 let listeningData = {};
 
 // API URL for the INI file
-const INI_FILE_URL = 'https://www.call2all.co.il/ym/api//DownloadFile?token=kRBbHssbQu1Hqm7X&path=ivr2:18/ListeningOk.ini';
+const INI_FILE_URL = 'https://www.call2all.co.il/ym/api//DownloadFile?token=029286458:1020&path=ivr2:18/ListeningOk.ini';
 
 // Parse INI file
 async function loadListeningData() {
