@@ -210,19 +210,23 @@ function populateDateDropdown() {
         return new Date(b) - new Date(a);
     });
     
-    // Populate dropdown
-    const select = document.getElementById('selectedDate');
+    // Populate custom dropdown
+    const customOptions = document.querySelector('.custom-options');
     
     // Clear existing options except the first one (the default "כל התאריכים")
-    while (select.options.length > 1) {
-        select.remove(1);
-    }
+    const firstOption = customOptions.querySelector('.custom-option');
+    customOptions.innerHTML = '';
+    customOptions.appendChild(firstOption);
     
     dates.forEach(date => {
-        const option = document.createElement('option');
-        option.value = date;
-        option.textContent = formatDate(date);
-        select.appendChild(option);
+        const option = document.createElement('div');
+        option.className = 'custom-option';
+        option.dataset.value = date;
+        option.innerHTML = `
+            <i class="fas fa-calendar-alt"></i>
+            ${formatDate(date)}
+        `;
+        customOptions.appendChild(option);
     });
     
     console.log('Found', dates.length, 'unique dates');
@@ -254,11 +258,11 @@ function calculateStatistics() {
     const activeStudents = filteredStudents.filter(s => s.filteredListeningCount > 0).length;
     const inactiveStudents = totalStudents - activeStudents;
     
-    // Update main stats
-    document.getElementById('totalStudents').textContent = totalStudents;
-    document.getElementById('totalListenings').textContent = totalListenings;
-    document.getElementById('activeStudents').textContent = activeStudents;
-    document.getElementById('inactiveStudents').textContent = inactiveStudents;
+    // Update main stats with animation
+    animateNumber('totalStudents', totalStudents);
+    animateNumber('totalListenings', totalListenings);
+    animateNumber('activeStudents', activeStudents);
+    animateNumber('inactiveStudents', inactiveStudents);
     
     // Update filter info
     const filterInfo = document.getElementById('filterInfo');
@@ -278,6 +282,34 @@ function calculateStatistics() {
     
     // Show top students
     renderTopStudents(filteredStudents);
+}
+
+// Animate number update
+function animateNumber(elementId, targetNumber) {
+    const element = document.getElementById(elementId);
+    const currentText = element.textContent.trim();
+    
+    // If it's loading dots, start from 0
+    const startNumber = currentText.includes('.') ? 0 : parseInt(currentText) || 0;
+    
+    const duration = 1000; // 1 second
+    const steps = 30;
+    const increment = (targetNumber - startNumber) / steps;
+    const stepDuration = duration / steps;
+    
+    let currentStep = 0;
+    
+    const timer = setInterval(() => {
+        currentStep++;
+        const currentValue = Math.round(startNumber + (increment * currentStep));
+        
+        if (currentStep >= steps) {
+            element.textContent = targetNumber;
+            clearInterval(timer);
+        } else {
+            element.textContent = currentValue;
+        }
+    }, stepDuration);
 }
 
 // Format date for display
@@ -416,23 +448,54 @@ function renderTopStudents(students) {
     container.innerHTML = html;
 }
 
-// Date filter handlers
-document.getElementById('selectedDate').addEventListener('change', (e) => {
-    selectedDate = e.target.value || null;
-    calculateStatistics();
-});
-
-document.getElementById('applyDateFilter').addEventListener('click', () => {
-    const dateInput = document.getElementById('selectedDate').value;
-    selectedDate = dateInput || null;
-    calculateStatistics();
-});
-
-document.getElementById('resetDateFilter').addEventListener('click', () => {
-    document.getElementById('selectedDate').value = '';
-    selectedDate = null;
-    calculateStatistics();
-});
+// Date filter handlers - Custom select
+function initCustomSelect() {
+    const customSelect = document.getElementById('customDateSelect');
+    const trigger = customSelect.querySelector('.custom-select-trigger');
+    const options = customSelect.querySelectorAll('.custom-option');
+    const selectedText = customSelect.querySelector('.selected-text');
+    const hiddenInput = document.getElementById('selectedDate');
+    
+    // Toggle dropdown
+    trigger.addEventListener('click', (e) => {
+        e.stopPropagation();
+        customSelect.classList.toggle('open');
+    });
+    
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!customSelect.contains(e.target)) {
+            customSelect.classList.remove('open');
+        }
+    });
+    
+    // Handle option selection
+    customSelect.addEventListener('click', (e) => {
+        const option = e.target.closest('.custom-option');
+        if (!option) return;
+        
+        // Remove active class from all options
+        options.forEach(opt => opt.classList.remove('active'));
+        
+        // Add active class to selected option
+        option.classList.add('active');
+        
+        // Update selected text
+        const text = option.textContent.trim();
+        selectedText.textContent = text;
+        
+        // Update hidden input value
+        const value = option.dataset.value || '';
+        hiddenInput.value = value;
+        
+        // Update selected date and recalculate
+        selectedDate = value || null;
+        calculateStatistics();
+        
+        // Close dropdown
+        customSelect.classList.remove('open');
+    });
+}
 
 // Export to Excel
 document.getElementById('exportToExcel').addEventListener('click', () => {
@@ -440,28 +503,61 @@ document.getElementById('exportToExcel').addEventListener('click', () => {
 });
 
 function exportToExcel() {
-    // Prepare data for export
-    const exportData = studentsData.map(student => {
-        // Check if student listened on selected date
-        let status = 'לא הקשיבה';
-        
-        if (selectedDate) {
+    let exportData = [];
+    
+    if (selectedDate) {
+        // Export for specific date - one row per student
+        exportData = studentsData.map(student => {
             const listenedOnDate = student.listeningHistory.some(item => item.date === selectedDate);
-            status = listenedOnDate ? 'הקשיבה' : 'לא הקשיבה';
-        } else {
-            // If no date selected, check if student has any listening history
-            status = student.listeningHistory.length > 0 ? 'הקשיבה' : 'לא הקשיבה';
-        }
-        
-        return {
-            'שכבה': student.grade,
-            'כיתה': student.className,
-            'תעודת זהות': student.id,
-            'שם פרטי': student.firstName,
-            'שם משפחה': student.lastName,
-            'סטטוס': status
-        };
-    });
+            const status = listenedOnDate ? 'הקשיבה' : 'לא הקשיבה';
+            
+            return {
+                'שכבה': student.grade,
+                'כיתה': student.className,
+                'תעודת זהות': student.id,
+                'שם פרטי': student.firstName,
+                'שם משפחה': student.lastName,
+                'סטטוס': status
+            };
+        });
+    } else {
+        // Export all dates - one row per student per date
+        studentsData.forEach(student => {
+            if (student.listeningHistory.length > 0) {
+                // Group listening history by date
+                const dateMap = {};
+                student.listeningHistory.forEach(listening => {
+                    if (!dateMap[listening.date]) {
+                        dateMap[listening.date] = true;
+                    }
+                });
+                
+                // Add a row for each unique date
+                Object.keys(dateMap).sort().forEach(date => {
+                    exportData.push({
+                        'תאריך': formatDate(date),
+                        'שכבה': student.grade,
+                        'כיתה': student.className,
+                        'תעודת זהות': student.id,
+                        'שם פרטי': student.firstName,
+                        'שם משפחה': student.lastName,
+                        'סטטוס': 'הקשיבה'
+                    });
+                });
+            } else {
+                // Add one row for students with no listening history
+                exportData.push({
+                    'תאריך': '',
+                    'שכבה': student.grade,
+                    'כיתה': student.className,
+                    'תעודת זהות': student.id,
+                    'שם פרטי': student.firstName,
+                    'שם משפחה': student.lastName,
+                    'סטטוס': 'לא הקשיבה'
+                });
+            }
+        });
+    }
     
     // Create worksheet
     const ws = XLSX.utils.json_to_sheet(exportData);
@@ -470,15 +566,27 @@ function exportToExcel() {
     if (!ws['!views']) ws['!views'] = [{}];
     ws['!views'][0] = { rightToLeft: true };
     
-    // Set column widths
-    ws['!cols'] = [
-        { wch: 10 },  // שכבה
-        { wch: 15 },  // כיתה
-        { wch: 15 },  // תעודת זהות
-        { wch: 20 },  // שם פרטי
-        { wch: 20 },  // שם משפחה
-        { wch: 15 }   // סטטוס
-    ];
+    // Set column widths based on export type
+    if (selectedDate) {
+        ws['!cols'] = [
+            { wch: 10 },  // שכבה
+            { wch: 15 },  // כיתה
+            { wch: 15 },  // תעודת זהות
+            { wch: 20 },  // שם פרטי
+            { wch: 20 },  // שם משפחה
+            { wch: 15 }   // סטטוס
+        ];
+    } else {
+        ws['!cols'] = [
+            { wch: 15 },  // תאריך
+            { wch: 10 },  // שכבה
+            { wch: 15 },  // כיתה
+            { wch: 15 },  // תעודת זהות
+            { wch: 20 },  // שם פרטי
+            { wch: 20 },  // שם משפחה
+            { wch: 15 }   // סטטוס
+        ];
+    }
     
     // Style the header row
     const range = XLSX.utils.decode_range(ws['!ref']);
@@ -574,6 +682,9 @@ function initTabs() {
             document.getElementById(`tab-${tabName}`).classList.add('active');
         });
     });
+    
+    // Initialize custom select
+    initCustomSelect();
 }
 
 // Refresh data - force reload

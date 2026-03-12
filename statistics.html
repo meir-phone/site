@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>סטטיסטיקות - מרחבים</title>
-    <link rel="icon" type="image/png" href="logo.png">
+    <link rel="icon" type="image/gif" href="logo.gif">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -15,7 +15,7 @@
 <body class="secondary-page">
     <header class="header">
         <div class="logo">
-            <img src="logo.png" alt="מרחבים" class="logo-img">
+            <img src="logo.gif" alt="מרחבים" class="logo-img">
         </div>
         <nav class="header-links">
             <a href="statistics.html" class="header-link active">סטטיסטיקות</a>
@@ -27,31 +27,71 @@
     <main class="main-content">
         <div class="page-header">
             <h2>סטטיסטיקות כלליות</h2>
-            <button class="refresh-btn" id="refreshData" title="רענן נתונים מהשרת">
-                <i class="fas fa-sync-alt"></i>
-                רענן נתונים
-            </button>
+            <div class="header-actions">
+                <div class="custom-select-wrapper">
+                    <div class="custom-select" id="customDateSelect">
+                        <div class="custom-select-trigger">
+                            <i class="fas fa-calendar-alt"></i>
+                            <span class="selected-text">כל התאריכים</span>
+                            <i class="fas fa-chevron-down arrow-icon"></i>
+                        </div>
+                        <div class="custom-options">
+                            <div class="custom-option active" data-value="">
+                                <i class="fas fa-calendar-alt"></i>
+                                כל התאריכים
+                            </div>
+                        </div>
+                    </div>
+                    <input type="hidden" id="selectedDate" value="">
+                </div>
+                <button class="export-btn" id="exportToExcel">
+                    <i class="fas fa-file-excel"></i>
+                    ייצא לאקסל
+                </button>
+                <button class="refresh-btn" id="refreshData" title="רענן נתונים מהשרת">
+                    <i class="fas fa-sync-alt"></i>
+                    רענן נתונים
+                </button>
+            </div>
         </div>
+
+        <div id="filterInfo" class="filter-info"></div>
 
         <div class="stats-grid">
             <div class="stat-card-large">
                 <i class="fas fa-users stat-icon"></i>
-                <div class="stat-number" id="totalStudents">0</div>
+                <div class="stat-number" id="totalStudents">
+                    <span class="loading-dots">
+                        <span>.</span><span>.</span><span>.</span>
+                    </span>
+                </div>
                 <div class="stat-label">סך תלמידות</div>
             </div>
             <div class="stat-card-large">
                 <i class="fas fa-headphones stat-icon"></i>
-                <div class="stat-number" id="totalListenings">0</div>
+                <div class="stat-number" id="totalListenings">
+                    <span class="loading-dots">
+                        <span>.</span><span>.</span><span>.</span>
+                    </span>
+                </div>
                 <div class="stat-label">סך האזנות</div>
             </div>
             <div class="stat-card-large">
                 <i class="fas fa-user-check stat-icon"></i>
-                <div class="stat-number" id="activeStudents">0</div>
+                <div class="stat-number" id="activeStudents">
+                    <span class="loading-dots">
+                        <span>.</span><span>.</span><span>.</span>
+                    </span>
+                </div>
                 <div class="stat-label">תלמידות פעילות</div>
             </div>
             <div class="stat-card-large">
                 <i class="fas fa-user-times stat-icon"></i>
-                <div class="stat-number" id="inactiveStudents">0</div>
+                <div class="stat-number" id="inactiveStudents">
+                    <span class="loading-dots">
+                        <span>.</span><span>.</span><span>.</span>
+                    </span>
+                </div>
                 <div class="stat-label">תלמידות לא פעילות</div>
             </div>
         </div>
@@ -61,7 +101,7 @@
             <div class="tabs-nav">
                 <button class="tab-btn active" data-tab="filter">
                     <i class="fas fa-filter"></i>
-                    סינון ותלמידות שלא הקשיבו
+                    תלמידות שלא הקשיבו
                 </button>
                 <button class="tab-btn" data-tab="grades">
                     <i class="fas fa-chart-pie"></i>
@@ -73,33 +113,8 @@
                 </button>
             </div>
 
-            <!-- Tab 1: Filter and Inactive Students -->
+            <!-- Tab 1: Inactive Students -->
             <div class="tab-content active" id="tab-filter">
-                <div class="filter-section">
-                    <h3>סינון לפי תאריך</h3>
-                    <div class="date-filters">
-                        <div class="date-input-group">
-                            <label for="selectedDate">בחר תאריך:</label>
-                            <select id="selectedDate" class="date-select">
-                                <option value="">כל התאריכים</option>
-                            </select>
-                        </div>
-                        <button class="filter-btn" id="applyDateFilter">
-                            <i class="fas fa-filter"></i>
-                            סנן
-                        </button>
-                        <button class="filter-btn" id="resetDateFilter">
-                            <i class="fas fa-redo"></i>
-                            הצג הכל
-                        </button>
-                        <button class="export-btn" id="exportToExcel">
-                            <i class="fas fa-file-excel"></i>
-                            ייצא לאקסל
-                        </button>
-                    </div>
-                    <div id="filterInfo" class="filter-info"></div>
-                </div>
-
                 <div class="stats-section">
                     <h3>תלמידות שלא הקשיבו בתאריך הנבחר</h3>
                     <div class="inactive-students-list" id="inactiveStudentsList">
