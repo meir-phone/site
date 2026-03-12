@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מרחבים - מנהל קבצים ושלוחות</title>
+    <link rel="icon" type="image/png" href="logo.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .file-manager-layout {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            gap: 2rem;
+            align-items: start;
+        }
+
+        .sidebar {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 252, 248, 0.98) 100%);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(76, 175, 80, 0.08);
+            border: 2px solid rgba(76, 175, 80, 0.1);
+            position: sticky;
+            top: 146px;
+            max-height: calc(100vh - 166px);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-header {
+            padding: 1.5rem;
+            border-bottom: 2px solid rgba(76, 175, 80, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            background: linear-gradient(135deg, rgba(76, 175, 80, 0.08) 0%, rgba(139, 195, 74, 0.08) 100%);
+        }
+
+        .sidebar-header i {
+            color: #4caf50;
+            font-size: 1.3em;
+        }
+
+        .sidebar-header h3 {
+            color: #2d5016;
+            font-size: 1.2em;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .sidebar-content {
+            padding: 1rem;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .sidebar-content::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .sidebar-content::-webkit-scrollbar-track {
+            background: rgba(76, 175, 80, 0.05);
+            border-radius: 3px;
+        }
+
+        .sidebar-content::-webkit-scrollbar-thumb {
+            background: rgba(76, 175, 80, 0.3);
+            border-radius: 3px;
+        }
+
+        .sidebar-content::-webkit-scrollbar-thumb:hover {
+            background: rgba(76, 175, 80, 0.5);
+        }
+
+        .tree-item {
+            padding: 0.7rem 0.8rem;
+            margin-bottom: 0.3rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            font-size: 0.95em;
+            color: #2d5016;
+            font-weight: 500;
+        }
+
+        .tree-item:hover {
+            background: rgba(76, 175, 80, 0.1);
+            transform: translateX(-3px);
+        }
+
+        .tree-item.active {
+            background: linear-gradient(135deg, rgba(76, 175, 80, 0.15) 0%, rgba(139, 195, 74, 0.15) 100%);
+            border-right: 3px solid #4caf50;
+            font-weight: 700;
+        }
+
+        .tree-item i {
+            color: #ffc107;
+            font-size: 1.1em;
+        }
+
+        .tree-item.active i {
+            color: #4caf50;
+        }
+
+        .tree-item-badge {
+            display: inline-block;
+            padding: 0.2rem 0.6rem;
+            background: linear-gradient(135deg, #4caf50 0%, #66bb6a 100%);
+            color: white;
+            border-radius: 10px;
+            font-size: 0.75em;
+            font-weight: 700;
+            margin-right: auto;
+        }
+
+        .tree-item-name {
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .main-panel {
+            min-width: 0;
+        }
+
+        .breadcrumb {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 252, 248, 0.98) 100%);
+            backdrop-filter: blur(10px);
+            padding: 1.5rem 2rem;
+            border-radius: 15px;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.1);
+            border: 2px solid rgba(76, 175, 80, 0.15);
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .breadcrumb a {
+            color: #4CAF50;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+        }
+
+        .breadcrumb a:hover {
+            background: rgba(76, 175, 80, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .breadcrumb-separator {
+            color: #5a6c57;
+            margin: 0 0.3rem;
+        }
+
+        .controls {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .controls select {
+            padding: 1rem 1.5rem;
+            border: 2px solid rgba(76, 175, 80, 0.2);
+            border-radius: 12px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: white;
+            font-weight: 600;
+            color: #2d5016;
+            cursor: pointer;
+        }
+
+        .controls select:focus {
+            outline: none;
+            border-color: #4caf50;
+            box-shadow: 0 0 0 4px rgba(76, 175, 80, 0.1);
+        }
+
+        .view-toggle {
+            display: flex;
+            gap: 0.5rem;
+            background: white;
+            padding: 0.3rem;
+            border-radius: 12px;
+            border: 2px solid rgba(76, 175, 80, 0.15);
+        }
+
+        .view-toggle button {
+            padding: 0.8rem 1.5rem;
+            background: transparent;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            color: #2d5016;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .view-toggle button:hover {
+            background: rgba(76, 175, 80, 0.1);
+        }
+
+        .view-toggle button.active {
+            background: linear-gradient(135deg, #4caf50 0%, #66bb6a 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+        }
+
+        .file-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .file-item, .folder-item {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 252, 248, 0.98) 100%);
+            backdrop-filter: blur(10px);
+            padding: 1.8rem;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.08);
+            border: 2px solid rgba(76, 175, 80, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .folder-item {
+            background: linear-gradient(135deg, rgba(255, 249, 230, 0.98) 0%, rgba(255, 252, 240, 0.98) 100%);
+            border-color: rgba(255, 193, 7, 0.3);
+        }
+
+        .file-item::before, .folder-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, #4caf50 0%, #8bc34a 50%, #66bb6a 100%);
+            transform: scaleX(0);
+            transform-origin: right;
+            transition: transform 0.4s ease;
+        }
+
+        .folder-item::before {
+            background: linear-gradient(90deg, #ffc107 0%, #ffeb3b 50%, #ffd54f 100%);
+        }
+
+        .file-item:hover::before, .folder-item:hover::before {
+            transform: scaleX(1);
+            transform-origin: left;
+        }
+
+        .file-item:hover, .folder-item:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 12px 30px rgba(76, 175, 80, 0.2);
+            border-color: rgba(76, 175, 80, 0.3);
+        }
+
+        .folder-item:hover {
+            box-shadow: 0 12px 30px rgba(255, 193, 7, 0.3);
+            border-color: rgba(255, 193, 7, 0.5);
+        }
+
+        .item-icon {
+            font-size: 3.5em;
+            margin-bottom: 1rem;
+            filter: drop-shadow(0 4px 8px rgba(76, 175, 80, 0.2));
+        }
+
+        .item-name {
+            font-weight: 700;
+            margin-bottom: 0.8rem;
+            word-break: break-word;
+            color: #2d5016;
+            font-size: 1.1em;
+        }
+
+        .item-details {
+            font-size: 0.9em;
+            color: #5a6c57;
+            font-weight: 500;
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+
+        .play-file-btn,
+        .view-file-btn {
+            width: 100%;
+            padding: 0.8rem 1.2rem;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.95em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .play-file-btn {
+            background: linear-gradient(135deg, #4caf50 0%, #66bb6a 100%);
+            color: white;
+            box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+        }
+
+        .play-file-btn:hover {
+            background: linear-gradient(135deg, #45a049 0%, #7cb342 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
+        }
+
+        .view-file-btn {
+            background: white;
+            color: #2d5016;
+            border: 2px solid rgba(76, 175, 80, 0.2);
+        }
+
+        .view-file-btn:hover {
+            background: rgba(76, 175, 80, 0.1);
+            border-color: #4caf50;
+        }
+
+        .file-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 252, 248, 0.98) 100%);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(76, 175, 80, 0.08);
+            border: 2px solid rgba(76, 175, 80, 0.1);
+        }
+
+        .file-table th, .file-table td {
+            padding: 1.2rem 1.5rem;
+            text-align: right;
+            border-bottom: 1px solid rgba(76, 175, 80, 0.1);
+        }
+
+        .file-table th {
+            background: linear-gradient(135deg, #4caf50 0%, #66bb6a 100%);
+            color: white;
+            font-weight: 700;
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.3s ease;
+            font-size: 1.05em;
+        }
+
+        .file-table th:hover {
+            background: linear-gradient(135deg, #45a049 0%, #7cb342 100%);
+        }
+
+        .file-table tbody tr {
+            transition: all 0.3s ease;
+        }
+
+        .file-table tbody tr:hover {
+            background: rgba(76, 175, 80, 0.05);
+            transform: translateX(-5px);
+        }
+
+        .file-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .table-action-btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9em;
+            margin: 0 0.2rem;
+        }
+
+        .table-action-btn.play-btn {
+            background: linear-gradient(135deg, #4caf50 0%, #66bb6a 100%);
+            color: white;
+        }
+
+        .table-action-btn.play-btn:hover {
+            background: linear-gradient(135deg, #45a049 0%, #7cb342 100%);
+            transform: translateY(-2px);
+        }
+
+        .table-action-btn.view-btn {
+            background: rgba(76, 175, 80, 0.1);
+            color: #4caf50;
+            border: 1px solid rgba(76, 175, 80, 0.3);
+        }
+
+        .table-action-btn.view-btn:hover {
+            background: rgba(76, 175, 80, 0.2);
+            border-color: #4caf50;
+        }
+
+        .ext-badge {
+            display: inline-block;
+            padding: 0.4rem 1rem;
+            background: linear-gradient(135deg, #4caf50 0%, #66bb6a 100%);
+            color: white;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 700;
+            margin-right: 0.5rem;
+            box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+        }
+
+        .action-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            padding: 1rem 1.8rem;
+            border: none;
+            border-radius: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+            font-size: 1rem;
+        }
+
+        .create-btn {
+            background: linear-gradient(135deg, #2196f3 0%, #42a5f5 100%);
+            color: white;
+        }
+
+        .create-btn:hover {
+            background: linear-gradient(135deg, #1976d2 0%, #2196f3 100%);
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(33, 150, 243, 0.4);
+        }
+
+        .upload-btn {
+            background: linear-gradient(135deg, #ff9800 0%, #ffa726 100%);
+            color: white;
+        }
+
+        .upload-btn:hover {
+            background: linear-gradient(135deg, #f57c00 0%, #ff9800 100%);
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(255, 152, 0, 0.4);
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(5px);
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 600px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            animation: slideUp 0.3s ease;
+            overflow: hidden;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, #4caf50 0%, #66bb6a 100%);
+            color: white;
+            padding: 1.5rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            font-size: 1.5em;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        .modal-close {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            font-size: 1.2em;
+        }
+
+        .modal-close:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: rotate(90deg);
+        }
+
+        .modal-body {
+            padding: 2rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #2d5016;
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid rgba(76, 175, 80, 0.2);
+            border-radius: 12px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            font-family: 'Heebo', sans-serif;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 150px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #4caf50;
+            box-shadow: 0 0 0 4px rgba(76, 175, 80, 0.1);
+        }
+
+        .info-box {
+            background: linear-gradient(135deg, rgba(33, 150, 243, 0.08) 0%, rgba(66, 165, 245, 0.08) 100%);
+            border: 2px solid rgba(33, 150, 243, 0.2);
+            border-radius: 12px;
+            padding: 1rem 1.5rem;
+            color: #1976d2;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            margin-top: 1rem;
+        }
+
+        .info-box i {
+            font-size: 1.3em;
+        }
+
+        .modal-footer {
+            padding: 1.5rem 2rem;
+            background: #f8f9fa;
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+        }
+
+        .btn-primary,
+        .btn-secondary {
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #4caf50 0%, #66bb6a 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #45a049 0%, #7cb342 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #666;
+            border: 2px solid #ddd;
+        }
+
+        .btn-secondary:hover {
+            background: #f5f5f5;
+            border-color: #bbb;
+        }
+
+        .audio-modal .modal-content {
+            max-width: 700px;
+        }
+
+        .audio-player-container {
+            padding: 1rem 0;
+        }
+
+        .audio-info {
+            margin-bottom: 1.5rem;
+        }
+
+        .audio-path {
+            background: linear-gradient(135deg, rgba(76, 175, 80, 0.05) 0%, rgba(139, 195, 74, 0.05) 100%);
+            padding: 1rem 1.5rem;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            color: #2d5016;
+            font-weight: 600;
+            border: 2px solid rgba(76, 175, 80, 0.1);
+        }
+
+        .audio-controls-info {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: linear-gradient(135deg, rgba(33, 150, 243, 0.05) 0%, rgba(66, 165, 245, 0.05) 100%);
+            border-radius: 10px;
+            color: #1976d2;
+            font-size: 0.9em;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            border: 2px solid rgba(33, 150, 243, 0.1);
+        }
+
+        .audio-controls-info i {
+            font-size: 1.2em;
+        }
+
+        @media (max-width: 1024px) {
+            .file-manager-layout {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                position: relative;
+                top: 0;
+                max-height: 400px;
+            }
+        }
+    </style>
+</head>
+<body class="secondary-page">
+    <header class="header">
+        <div class="logo">
+            <img src="logo.png" alt="מרחבים" class="logo-img">
+        </div>
+        <nav class="header-links">
+            <a href="file-manager.html" class="header-link active">מנהל קבצים</a>
+            <a href="statistics.html" class="header-link">סטטיסטיקות</a>
+            <a href="dashboard.html" class="header-link">תלמידים</a>
+            <a href="index.html" class="header-link">דף הבית</a>
+        </nav>
+    </header>
+
+    <main class="main-content">
+        <div class="file-manager-layout">
+            <!-- Sidebar -->
+            <aside class="sidebar">
+                <div class="sidebar-header">
+                    <i class="fas fa-folder-tree"></i>
+                    <h3>עץ תיקיות</h3>
+                </div>
+                <div class="sidebar-content" id="sidebarTree">
+                    <div class="loading"><i class="fas fa-spinner fa-spin"></i> טוען...</div>
+                </div>
+            </aside>
+
+            <!-- Main Content -->
+            <div class="main-panel">
+                <div class="page-header">
+                    <h2>מנהל קבצים ושלוחות</h2>
+                    <div class="header-actions">
+                        <button class="action-btn create-btn" onclick="showCreateExtensionDialog()">
+                            <i class="fas fa-plus"></i>
+                            שלוחה חדשה
+                        </button>
+                        <button class="action-btn upload-btn" onclick="showUploadDialog()">
+                            <i class="fas fa-upload"></i>
+                            העלאת קובץ
+                        </button>
+                        <button class="refresh-btn" onclick="loadDirectory()">
+                            <i class="fas fa-sync-alt"></i>
+                            רענן
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="breadcrumb" id="breadcrumb">
+                    <a href="#" data-path="/"><i class="fas fa-home"></i> ראשי</a>
+                </div>
+
+                <div class="search-section">
+                    <div class="controls">
+                        <div class="view-toggle">
+                            <button id="gridView" class="active" onclick="setView('grid')">
+                                <i class="fas fa-th"></i> תצוגת רשת
+                            </button>
+                            <button id="listView" onclick="setView('list')">
+                                <i class="fas fa-list"></i> תצוגת רשימה
+                            </button>
+                        </div>
+                        
+                        <select id="sortBy" onchange="loadDirectory()">
+                            <option value="name">מיין לפי: שם</option>
+                            <option value="date">מיין לפי: תאריך יצירה</option>
+                            <option value="mtime">מיין לפי: תאריך שינוי</option>
+                            <option value="size">מיין לפי: גודל</option>
+                        </select>
+
+                        <select id="sortDir" onchange="loadDirectory()">
+                            <option value="asc">סדר עולה</option>
+                            <option value="desc">סדר יורד</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="content">
+                    <div class="loading">טוען...</div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal for creating extension -->
+    <div id="createExtensionModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-plus-circle"></i> יצירת שלוחה חדשה</h3>
+                <button class="modal-close" onclick="closeModal('createExtensionModal')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="extNumber">מספר שלוחה *</label>
+                    <input type="text" id="extNumber" placeholder="לדוגמה: 123" required>
+                </div>
+                <div class="form-group">
+                    <label for="extType">סוג שלוחה *</label>
+                    <select id="extType" required>
+                        <option value="">בחר סוג שלוחה</option>
+                        <option value="menu">תפריט</option>
+                        <option value="forward">העברה</option>
+                        <option value="recording">הקלטה</option>
+                        <option value="ivr">IVR</option>
+                        <option value="queue">תור המתנה</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="extTitle">כינוי שלוחה *</label>
+                    <input type="text" id="extTitle" placeholder="לדוגמה: תפריט ראשי" required>
+                </div>
+                <div class="form-group">
+                    <label for="extEnterId">כניסה לפי מספר אישי</label>
+                    <select id="extEnterId">
+                        <option value="no">לא</option>
+                        <option value="yes">כן</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closeModal('createExtensionModal')">
+                    <i class="fas fa-times"></i> ביטול
+                </button>
+                <button class="btn-primary" onclick="createExtension()">
+                    <i class="fas fa-check"></i> צור שלוחה
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for uploading file -->
+    <div id="uploadModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-upload"></i> העלאת קובץ</h3>
+                <button class="modal-close" onclick="closeModal('uploadModal')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="uploadFileName">שם קובץ *</label>
+                    <input type="text" id="uploadFileName" placeholder="לדוגמה: message.txt" required>
+                </div>
+                <div class="form-group">
+                    <label for="uploadFileContent">תוכן הקובץ *</label>
+                    <textarea id="uploadFileContent" rows="10" placeholder="הזן את תוכן הקובץ כאן..." required></textarea>
+                </div>
+                <div class="info-box">
+                    <i class="fas fa-info-circle"></i>
+                    הקובץ יישמר בתיקייה הנוכחית: <strong id="currentPathDisplay"></strong>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closeModal('uploadModal')">
+                    <i class="fas fa-times"></i> ביטול
+                </button>
+                <button class="btn-primary" onclick="uploadFile()">
+                    <i class="fas fa-upload"></i> העלה קובץ
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for audio player -->
+    <div id="audioPlayerModal" class="modal">
+        <div class="modal-content audio-modal">
+            <div class="modal-header">
+                <h3><i class="fas fa-music"></i> <span id="audioFileName">נגן שמע</span></h3>
+                <button class="modal-close" onclick="closeModal('audioPlayerModal'); stopAudio();">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="audio-player-container">
+                    <div class="audio-info">
+                        <div class="audio-path" id="audioFilePath"></div>
+                    </div>
+                    <audio id="audioPlayer" controls style="width: 100%; margin-top: 1rem;">
+                        <source id="audioSource" type="audio/wav">
+                        הדפדפן שלך לא תומך בנגן שמע.
+                    </audio>
+                    <div class="audio-controls-info">
+                        <i class="fas fa-info-circle"></i>
+                        השתמש בכפתורי הנגן כדי להפעיל, להשהות ולשנות את עוצמת הקול
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="file-manager.js"></script>
+</body>
+</html>

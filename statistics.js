@@ -94,8 +94,17 @@ async function loadListeningData() {
             const id = parts[0].replace('teudat_zehut_', '');
             const extension = parts[1];
             const file = parts[2];
-            const date = `${parts[4]}-${parts[5]}-${parts[6]}`;
+            const originalDate = `${parts[4]}-${parts[5]}-${parts[6]}`;
             const time = `${parts[8]}-${parts[9]}-${parts[10]}`.replace(/-/g, ':');
+            
+            // Create datetime object
+            const datetime = new Date(`${originalDate} ${time}`);
+            
+            // Subtract 5 hours to shift day boundary from 00:00 to 05:00
+            const adjustedDatetime = new Date(datetime.getTime() - (5 * 60 * 60 * 1000));
+            
+            // Extract adjusted date in YYYY-MM-DD format
+            const adjustedDate = adjustedDatetime.toISOString().split('T')[0];
             
             if (!listeningData[id]) {
                 listeningData[id] = [];
@@ -104,9 +113,9 @@ async function loadListeningData() {
             listeningData[id].push({
                 extension,
                 file,
-                date,
+                date: adjustedDate,
                 time,
-                datetime: new Date(`${date} ${time}`)
+                datetime: adjustedDatetime
             });
             
             processedCount++;
