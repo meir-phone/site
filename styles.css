@@ -2094,3 +2094,21 @@ i {
     color: #333;
     font-weight: 600;
 }
+
+
+/* Chart Container */
+.chart-container {
+    background: white;
+    padding: 2rem;
+    border-radius: 15px;
+    box-shadow: 0 2px 8px rgba(76, 175, 80, 0.05);
+    margin-top: 1.5rem;
+    min-height: 500px;
+    position: relative;
+}
+
+#progressChart {
+    width: 100% !important;
+    height: 400px !important;
+    max-height: 400px;
+}

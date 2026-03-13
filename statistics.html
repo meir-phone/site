@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="styles.css">
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <body class="secondary-page">
     <header class="header">
@@ -100,7 +101,11 @@
         <!-- Tabs Navigation -->
         <div class="tabs-container">
             <div class="tabs-nav">
-                <button class="tab-btn active" data-tab="filter">
+                <button class="tab-btn active" data-tab="progress">
+                    <i class="fas fa-chart-line"></i>
+                    גרף התקדמות
+                </button>
+                <button class="tab-btn" data-tab="filter">
                     <i class="fas fa-filter"></i>
                     תלמידות שלא הקשיבו
                 </button>
@@ -114,8 +119,21 @@
                 </button>
             </div>
 
+            <!-- Tab 0: Progress Chart -->
+            <div class="tab-content active" id="tab-progress">
+                <div class="stats-section">
+                    <h3>
+                        <i class="fas fa-chart-line"></i>
+                        גרף פעילות תלמידים לפי ימים (באחוזים)
+                    </h3>
+                    <div class="chart-container">
+                        <canvas id="progressChart" width="800" height="400"></canvas>
+                    </div>
+                </div>
+            </div>
+
             <!-- Tab 1: Inactive Students -->
-            <div class="tab-content active" id="tab-filter">
+            <div class="tab-content" id="tab-filter">
                 <div class="stats-section">
                     <h3>תלמידות שלא הקשיבו בתאריך הנבחר</h3>
                     <div class="inactive-students-list" id="inactiveStudentsList">

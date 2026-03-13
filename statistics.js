@@ -133,6 +133,9 @@ async function loadListeningData() {
         // Update students with listening data
         updateStudentsWithListeningData();
         
+        // Update chart with new data
+        renderProgressChart();
+        
         // Save to cache
         saveToCache();
         
@@ -291,6 +294,9 @@ function calculateStatistics() {
     
     // Show top students
     renderTopStudents(filteredStudents);
+    
+    // Render progress chart
+    renderProgressChart();
 }
 
 // Animate number update
@@ -455,6 +461,182 @@ function renderTopStudents(students) {
     `).join('');
     
     container.innerHTML = html;
+}
+
+// Render progress chart
+let progressChart = null;
+
+function renderProgressChart() {
+    const canvas = document.getElementById('progressChart');
+    if (!canvas) {
+        console.log('⚠️ Canvas element not found');
+        return;
+    }
+    
+    console.log('📊 Rendering progress chart...');
+    
+    // Collect all dates and calculate percentages
+    const dateMap = {};
+    const totalStudents = studentsData.length;
+    
+    if (totalStudents === 0) {
+        console.log('⚠️ No students data available');
+        return;
+    }
+    
+    // Initialize all dates with 0
+    Object.values(listeningData).forEach(history => {
+        history.forEach(item => {
+            if (!dateMap[item.date]) {
+                dateMap[item.date] = new Set();
+            }
+        });
+    });
+    
+    // Count unique students per date
+    Object.entries(listeningData).forEach(([studentId, history]) => {
+        history.forEach(item => {
+            if (!dateMap[item.date]) {
+                dateMap[item.date] = new Set();
+            }
+            dateMap[item.date].add(studentId);
+        });
+    });
+    
+    // Convert to arrays and calculate percentages
+    const dates = Object.keys(dateMap).sort();
+    
+    if (dates.length === 0) {
+        console.log('⚠️ No dates found in listening data');
+        // Show empty state
+        const ctx = canvas.getContext('2d');
+        if (progressChart) {
+            progressChart.destroy();
+        }
+        ctx.font = '16px Heebo';
+        ctx.fillStyle = '#666';
+        ctx.textAlign = 'center';
+        ctx.fillText('אין נתונים להצגה', canvas.width / 2, canvas.height / 2);
+        return;
+    }
+    
+    const percentages = dates.map(date => {
+        const uniqueStudents = dateMap[date].size;
+        return Math.round((uniqueStudents / totalStudents) * 100);
+    });
+    
+    console.log(`📊 Chart data: ${dates.length} dates, ${percentages.length} percentages`);
+    
+    // Format dates for display (last 30 days or all if less)
+    const displayDates = dates.slice(-30).map(date => formatDate(date));
+    const displayPercentages = percentages.slice(-30);
+    
+    // Destroy existing chart if exists
+    if (progressChart) {
+        progressChart.destroy();
+    }
+    
+    // Create new chart
+    const ctx = canvas.getContext('2d');
+    progressChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: displayDates,
+            datasets: [{
+                label: 'אחוז תלמידות פעילות',
+                data: displayPercentages,
+                borderColor: 'rgb(76, 175, 80)',
+                backgroundColor: 'rgba(76, 175, 80, 0.1)',
+                borderWidth: 3,
+                fill: true,
+                tension: 0.4,
+                pointRadius: 5,
+                pointHoverRadius: 7,
+                pointBackgroundColor: 'rgb(76, 175, 80)',
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top',
+                    align: 'end',
+                    labels: {
+                        font: {
+                            family: 'Heebo',
+                            size: 14,
+                            weight: '600'
+                        },
+                        color: '#2d5016',
+                        padding: 15,
+                        usePointStyle: true
+                    }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(45, 80, 22, 0.95)',
+                    titleFont: {
+                        family: 'Heebo',
+                        size: 14,
+                        weight: '700'
+                    },
+                    bodyFont: {
+                        family: 'Heebo',
+                        size: 13
+                    },
+                    padding: 12,
+                    cornerRadius: 8,
+                    displayColors: false,
+                    callbacks: {
+                        label: function(context) {
+                            return context.parsed.y + '% מהתלמידות';
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    ticks: {
+                        callback: function(value) {
+                            return value + '%';
+                        },
+                        font: {
+                            family: 'Heebo',
+                            size: 12,
+                            weight: '600'
+                        },
+                        color: '#5a6c57'
+                    },
+                    grid: {
+                        color: 'rgba(76, 175, 80, 0.1)',
+                        drawBorder: false
+                    }
+                },
+                x: {
+                    ticks: {
+                        font: {
+                            family: 'Heebo',
+                            size: 11,
+                            weight: '500'
+                        },
+                        color: '#5a6c57',
+                        maxRotation: 45,
+                        minRotation: 45
+                    },
+                    grid: {
+                        display: false
+                    }
+                }
+            }
+        }
+    });
+    
+    console.log('✅ Chart rendered successfully');
 }
 
 // Date filter handlers - Custom select
@@ -650,6 +832,7 @@ async function init() {
         console.log('⚡⚡⚡ INSTANT LOAD FROM CACHE - 0ms! ⚡⚡⚡');
         populateDateDropdown();
         calculateStatistics();
+        renderProgressChart();
         initTabs();
         
         // Show cache age
